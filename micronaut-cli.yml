@@ -1,0 +1,6 @@
+applicationType: default
+defaultPackage: webapp
+testFramework: spock
+sourceLanguage: groovy
+buildTool: gradle
+features: [app-name, docker, file-watch, shade, http-client, netty-server, logback, groovy, spock, gradle, readme, yaml]

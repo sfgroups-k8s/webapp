@@ -1,0 +1,110 @@
+plugins {
+    id "groovy"
+    id "com.github.johnrengelman.shadow" version "5.2.0"
+    id "application"
+    id "com.google.cloud.tools.jib" version "2.0.0"
+}
+
+version "0.1"
+group "webapp"
+
+repositories {
+    mavenCentral()
+    maven { url "https://jcenter.bintray.com" }
+}
+
+configurations {
+    // for dependencies that are needed for development only
+    developmentOnly 
+}
+ext {
+    micronautVersion = "2.0.1"
+    micronautDataVersion = "1.1.3"
+
+}
+dependencies {
+
+    compileOnly "io.micronaut.data:micronaut-data-processor:$micronautDataVersion"
+    //implementation("io.micronaut.data:micronaut-data-hibernate-jpa:$micronautDataVersion")
+    implementation ("io.micronaut.data:micronaut-data-jdbc:$micronautDataVersion")
+    annotationProcessor("io.micronaut.data:micronaut-data-processor:$micronautDataVersion")
+    implementation "jakarta.persistence:jakarta.persistence-api:2.2.2"
+
+    compileOnly platform("io.micronaut:micronaut-bom:$micronautVersion")
+    compileOnly "io.micronaut:micronaut-inject-groovy"
+    compileOnly "io.micronaut.configuration:micronaut-openapi"
+    implementation platform("io.micronaut:micronaut-bom:$micronautVersion")
+    implementation("io.micronaut.groovy:micronaut-runtime-groovy")
+
+    implementation "io.micronaut:micronaut-validation"
+    implementation "javax.annotation:javax.annotation-api"
+    implementation "io.micronaut:micronaut-http-server-netty"
+    implementation "io.micronaut:micronaut-http-client"
+    runtimeOnly "ch.qos.logback:logback-classic:1.2.3"
+    implementation "io.swagger.core.v3:swagger-annotations"
+    compileOnly "io.micronaut.configuration:micronaut-openapi"
+
+
+    runtimeOnly "com.h2database:h2"
+    runtime("io.micronaut.sql:micronaut-jdbc-tomcat")
+
+    // https://mvnrepository.com/artifact/mysql/mysql-connector-java
+    compile group: 'mysql', name: 'mysql-connector-java', version: '8.0.21'
+
+    testCompileOnly platform("io.micronaut:micronaut-bom:$micronautVersion")
+    testImplementation platform("io.micronaut:micronaut-bom:$micronautVersion")
+    testImplementation("org.spockframework:spock-core") {
+        exclude group: "org.codehaus.groovy", module: "groovy-all"
+    }
+    testImplementation "io.micronaut:micronaut-inject-groovy"
+    testImplementation "io.micronaut.test:micronaut-test-spock"
+    testImplementation "io.micronaut.test:micronaut-test-junit5"
+    testRuntimeOnly "org.junit.vintage:junit-vintage-engine:5.5.0"
+
+}
+
+test.classpath += configurations.developmentOnly
+
+mainClassName = "webapp.Application"
+tasks.withType(GroovyCompile) {
+    groovyOptions.forkOptions.jvmArgs.add('-Dgroovy.parameters=true -Dmicronaut.openapi.views.spec=rapidoc.enabled=true,swagger-ui.enabled=true,swagger-ui.theme=flattop')
+}
+
+shadowJar {
+    mergeServiceFiles()
+}
+
+run.classpath += configurations.developmentOnly
+run.jvmArgs('-noverify', '-XX:TieredStopAtLevel=1', '-Dcom.sun.management.jmxremote')
+run.jvmArgs('-noverify', '-XX:TieredStopAtLevel=1')
+
+run {
+    systemProperty('micronaut.environments','dev')
+
+
+}
+
+jib {
+    from {
+        image = 'openjdk:8-jdk-alpine'
+    }
+
+    to {
+        image = 'registry.hub.docker.com/sfgroups/webapp'
+        //  tags = ['tag2', 'latest']
+        /*  auth {
+               username = dockerUsername
+               password = dockerPassword
+           }*/
+    }
+    container {
+        jvmFlags = ['-Djava.security.egd=file:/dev/./urandom', '-Duser.timezone=GMT+05', '-Xdebug','-Xms512m', '-Xmx512m']
+        args = ['some args']
+        ports = ['8880']
+        labels = [key1: 'value1', key2: 'value2']
+        user= "1000:1000"
+        format = 'OCI'
+
+    }
+    allowInsecureRegistries = true
+}

@@ -1,0 +1,59 @@
+micronaut:
+  application:
+    name: webapp
+  server:
+    port: 8080
+    cors:
+      enabled: true
+  io:
+    watch:
+      paths: src/main
+      restart: true
+  router:
+    static-resources:
+      swagger:
+        paths: classpath:META-INF/swagger
+        mapping: /swagger/**
+      redoc:
+        paths: classpath:META-INF/swagger/views/redoc
+        mapping: /redoc/**
+      rapidoc:
+        paths: classpath:META-INF/swagger/views/rapidoc
+        mapping: /rapidoc/**
+      swagger-ui:
+        paths: classpath:META-INF/swagger/views/swagger-ui
+        mapping: /swagger-ui/**
+
+---
+datasources:
+  default:
+    pooled: true
+    minPoolSize: 1
+    maxPoolSize: 10
+    jmxExport: true
+    url:  ${JDBC_URL:`jdbc:mysql://localhost/appdb?autoReconnect=true`}
+    driverClassName: com.mysql.cj.jdbc.Driver
+    username: ${JDBC_USER:appuser}
+    password: ${JDBC_PASSWORD:apppassword}
+    dialect: MYSQL
+    jmxEnabled: true
+    initialSize: 5
+    maxActive: 50
+    minIdle: 5
+    maxIdle: 25
+    maxWait: 10000
+    maxAge: 600000
+    timeBetweenEvictionRunsMillis: 5000
+    minEvictableIdleTimeMillis: 60000
+    validationQuery: "SELECT 1"
+    validationQueryTimeout: 3
+    validationInterval: 15000
+    testOnBorrow: true
+    testWhileIdle: true
+    testOnReturn: false
+    jdbcInterceptors: "ConnectionState;StatementCache(max=200)"
+    schema-generate: CREATE_DROP
+
+---
+greeting:
+  message: Hello from Micronaut WebApp Application
